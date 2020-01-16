@@ -5,20 +5,42 @@ declare(strict_types=1);
 namespace Akeneo\Connectivity\Connection\back\tests\EndToEnd\Connection;
 
 use Akeneo\Connectivity\Connection\Application\Settings\Command\CreateConnectionCommand;
+use Akeneo\Connectivity\Connection\back\tests\EndToEnd\WebTestCase;
 use Akeneo\Connectivity\Connection\Domain\Settings\Model\Read\ConnectionWithCredentials;
 use Akeneo\Connectivity\Connection\Domain\Settings\Model\ValueObject\FlowType;
 use Akeneo\Test\Integration\Configuration;
-use Akeneo\Test\Integration\TestCase;
 use Doctrine\DBAL\Connection as DbalConnection;
 use PHPUnit\Framework\Assert;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @author Pierre Jolly <pierre.jolly@akeneo.com>
  * @copyright 2019 Akeneo SAS (http://www.akeneo.com)
  * @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  */
-class CreateConnectionEndToEnd extends TestCase
+class CreateConnectionEndToEnd extends WebTestCase
 {
+    public function test_it_creates_a_connection(): void
+    {
+        $data = [
+            "code" => "franklin",
+            "label" => "Franklin with updated label",
+            "flow_type" => FlowType::DATA_DESTINATION,
+        ];
+
+        $this->authenticateAsAdmin();
+        $this->client->request(
+            'POST',
+            '/rest/connections',
+            ['headers' => ['Content-Type' => 'application/json']],
+            [],
+            [],
+            json_encode($data)
+        );
+
+        Assert::assertEquals(Response::HTTP_NO_CONTENT, $this->client->getResponse()->getStatusCode());
+    }
+
     public function test_it_creates_the_connection_and_client_and_user()
     {
         $createConnectionCommand = new CreateConnectionCommand('magento', 'Magento Connector', FlowType::DATA_DESTINATION);
@@ -48,10 +70,7 @@ class CreateConnectionEndToEnd extends TestCase
         Assert::assertSame('All', $user['group_name']);
     }
 
-    /**
-     * @return Configuration
-     */
-    protected function getConfiguration()
+    protected function getConfiguration(): Configuration
     {
         return $this->catalog->useMinimalCatalog();
     }

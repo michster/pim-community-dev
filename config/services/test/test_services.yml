@@ -10,6 +10,7 @@ parameters:
 imports:
     # Akeneo/Connectivity/Connection
     - { resource: ../../../src/Akeneo/Connectivity/Connection/back/tests/Integration/Resources/config/loaders.yml }
+    - { resource: ../../../src/Akeneo/Connectivity/Connection/back/tests/EndToEnd/Resources/config/services.yml }
 
 services:
 

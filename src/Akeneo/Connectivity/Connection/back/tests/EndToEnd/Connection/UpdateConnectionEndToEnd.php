@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Akeneo\Connectivity\Connection\back\tests\EndToEnd\Connection;
 
-use Akeneo\Connectivity\Connection\back\tests\EndToEnd\WebTestCase;
+use Akeneo\Connectivity\Connection\back\tests\EndToEnd\InternalApiTestCase;
 use Akeneo\Connectivity\Connection\Domain\Settings\Model\Read\ConnectionWithCredentials;
 use Akeneo\Connectivity\Connection\Domain\Settings\Model\ValueObject\FlowType;
 use Akeneo\Test\Integration\Configuration;
@@ -15,9 +15,17 @@ use Symfony\Component\HttpFoundation\Response;
  * @copyright 2019 Akeneo SAS (http://www.akeneo.com)
  * @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  */
-class UpdateConnectionEndToEnd extends WebTestCase
+class UpdateConnectionEndToEnd extends InternalApiTestCase
 {
-    public function test_it_updates_a_connection()
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $user = $this->createAdminUser();
+        $this->getInternalApiClient()->authenticate($user);
+    }
+
+    public function test_it_updates_a_connection(): void
     {
         /** @var ConnectionWithCredentials */
         $connection = $this->get('akeneo_connectivity.connection.fixtures.connection_loader')->createConnection(
@@ -35,14 +43,12 @@ class UpdateConnectionEndToEnd extends WebTestCase
             "user_group_id" => $connection->userGroupId()
         ];
 
+        $response = $this->getInternalApiClient()->post('/rest/connections/franklin', $data);
 
-        $this->authenticateAsAdmin();
-        $this->client->request('POST', '/rest/connections/franklin', [], [], [], json_encode($data));
-
-        Assert::assertEquals(Response::HTTP_NO_CONTENT, $this->client->getResponse()->getStatusCode());
+        Assert::assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
     }
 
-    public function test_it_fails_to_update_a_connection_with_a_bad_request()
+    public function test_it_fails_to_update_a_connection_with_a_bad_request(): void
     {
         /** @var ConnectionWithCredentials */
         $connection = $this->get('akeneo_connectivity.connection.fixtures.connection_loader')->createConnection(
@@ -60,10 +66,9 @@ class UpdateConnectionEndToEnd extends WebTestCase
             "user_group_id" => $connection->userGroupId()
         ];
 
-        $this->authenticateAsAdmin();
-        $this->client->request('POST', '/rest/connections/franklin', [], [], [], json_encode($data));
+        $response = $this->getInternalApiClient()->post('/rest/connections/franklin', $data);
 
-        Assert::assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
+        Assert::assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
 
         $result = [
             "message" => "akeneo_connectivity.connection.constraint_violation_list_exception",
@@ -78,13 +83,10 @@ class UpdateConnectionEndToEnd extends WebTestCase
                 ]
             ]
         ];
-        Assert::assertEquals($result, json_decode($this->client->getResponse()->getContent(), true));
+        Assert::assertEquals($result, json_decode($response->getContent(), true));
     }
 
-    /**
-     * @return Configuration
-     */
-    protected function getConfiguration()
+    protected function getConfiguration(): Configuration
     {
         return $this->catalog->useMinimalCatalog();
     }
